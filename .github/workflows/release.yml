@@ -14,12 +14,19 @@ concurrency:
 jobs:
   validate:
     name: Validate tag and run checks
-    runs-on: ubuntu-latest
+    runs-on: avrea-ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           persist-credentials: false
+      - name: Install jj
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          curl -fsSL https://github.com/jj-vcs/jj/releases/download/v0.45.1/jj-v0.45.1-x86_64-unknown-linux-musl.tar.gz \
+            | tar -xz -C "$HOME/.local/bin" --strip-components=1 ./jj
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          jj --version
       - uses: oven-sh/setup-bun@v2
       - uses: actions/setup-node@v4
         with:
@@ -43,7 +50,7 @@ jobs:
   package:
     name: Package npm tarball
     needs: validate
-    runs-on: ubuntu-latest
+    runs-on: avrea-ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -81,7 +88,7 @@ jobs:
   publish:
     name: Publish GitHub release
     needs: [validate, package]
-    runs-on: ubuntu-latest
+    runs-on: avrea-ubuntu-latest
     permissions:
       contents: write
     steps:
