@@ -1,0 +1,113 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate tag and run checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run checks (bun test + tsc)
+        run: npm run check
+      - name: Extract release notes from the tagged CHANGELOG
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          EVENT_SHA: ${{ github.sha }}
+        run: bun scripts/generate-release-notes.ts "$RELEASE_TAG" "$EVENT_SHA" --output release-notes.md
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-notes
+          path: release-notes.md
+          if-no-files-found: error
+
+  package:
+    name: Package npm tarball
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Check package.json version matches the tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "${RELEASE_TAG#v}" != "$version" ]; then
+            echo "::error::tag ${RELEASE_TAG} does not match package.json version ${version}"
+            exit 1
+          fi
+      - name: Install dependencies
+        run: npm ci
+      - name: Build the npm tarball
+        run: npm pack
+      - name: Compute SHA-256 checksums
+        run: |
+          tarball="$(ls anthodev-omp-statusline-*.tgz)"
+          sha256sum "$tarball" > SHA256SUMS
+          cat SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: npm-package
+          path: |
+            anthodev-omp-statusline-*.tgz
+            SHA256SUMS
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub release
+    needs: [validate, package]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@v2
+      - name: Regenerate release notes from the tagged commit
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+          EVENT_SHA: ${{ github.sha }}
+        run: bun scripts/generate-release-notes.ts "$RELEASE_TAG" "$EVENT_SHA" --output release-notes.md
+      - uses: actions/download-artifact@v4
+        with:
+          name: npm-package
+      - name: Verify artifact checksums
+        run: sha256sum -c SHA256SUMS
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --verify-tag \
+            --title "$RELEASE_TAG" \
+            --notes-file release-notes.md \
+            anthodev-omp-statusline-*.tgz SHA256SUMS
