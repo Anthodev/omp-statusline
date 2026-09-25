@@ -1,6 +1,6 @@
 import { CustomEditor, getAgentDir, getSettingsListTheme } from "@oh-my-pi/pi-coding-agent";
 import { Input, SettingsList, truncateToWidth, visibleWidth } from "@oh-my-pi/pi-tui";
-import { createOmpStatusline, type StatuslineRuntime } from "../src/core.ts";
+import { createOmpStatusline } from "../src/core.ts";
 
 type OmpTimerContext = {
   setInterval(callback: () => void | Promise<void>, delay: number): unknown;
@@ -22,9 +22,7 @@ function getTimerContext(ctx: unknown): OmpTimerContext {
 }
 
 export default createOmpStatusline({
-  kind: "omp",
-  // Pi and OMP expose runtime-compatible editors through distinct nominal types.
-  CustomEditor: CustomEditor as unknown as StatuslineRuntime["CustomEditor"],
+  CustomEditor,
   truncateToWidth,
   visibleWidth,
   getAgentDir: () => getAgentDir(),

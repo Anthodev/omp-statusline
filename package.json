@@ -1,7 +1,7 @@
 {
   "name": "@anthodev/omp-statusline",
   "version": "0.1.0",
-  "description": "Configurable statusline for Pi and Oh My Pi with context, usage, cost, VCS, Caveman, and Ponytail indicators.",
+  "description": "Configurable statusline for Oh My Pi with context, usage, cost, VCS, Caveman, and Ponytail indicators.",
   "type": "module",
   "license": "MIT",
   "author": "Anthodev",
@@ -12,8 +12,6 @@
   "homepage": "https://github.com/Anthodev/omp-statusline#readme",
   "bugs": "https://github.com/Anthodev/omp-statusline/issues",
   "keywords": [
-    "pi-package",
-    "pi-extension",
     "omp-extension",
     "statusline",
     "jujutsu",
@@ -32,31 +30,20 @@
     "check": "bun test && tsc --noEmit",
     "pack:check": "npm pack --dry-run"
   },
-  "pi": {
-    "extensions": [
-      "./extensions/pi.ts"
-    ]
-  },
   "omp": {
     "extensions": [
       "./extensions/omp.ts"
     ]
   },
   "peerDependencies": {
-    "@earendil-works/pi-coding-agent": "*",
-    "@earendil-works/pi-tui": "*",
     "@oh-my-pi/pi-coding-agent": "*",
     "@oh-my-pi/pi-tui": "*"
   },
   "peerDependenciesMeta": {
-    "@earendil-works/pi-coding-agent": { "optional": true },
-    "@earendil-works/pi-tui": { "optional": true },
     "@oh-my-pi/pi-coding-agent": { "optional": true },
     "@oh-my-pi/pi-tui": { "optional": true }
   },
   "devDependencies": {
-    "@earendil-works/pi-coding-agent": "0.83.0",
-    "@earendil-works/pi-tui": "0.83.0",
     "@oh-my-pi/pi-coding-agent": "17.2.5",
     "@oh-my-pi/pi-tui": "17.2.5",
     "@types/bun": "latest",

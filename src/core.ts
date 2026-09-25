@@ -18,11 +18,11 @@ import type {
   ExtensionAPI,
   ExtensionContext,
   KeybindingsManager,
-} from "@earendil-works/pi-coding-agent";
+} from "@oh-my-pi/pi-coding-agent";
 import type {
   EditorTheme,
   TUI,
-} from "@earendil-works/pi-tui";
+} from "@oh-my-pi/pi-tui";
 
 type StatusTheme = {
   fg(color: string, text: string): string;
@@ -51,7 +51,6 @@ export type StatuslineSettingItem = {
   submenu?: (currentValue: string, done: (selectedValue?: string) => void) => StatuslineComponent;
 };
 export type StatuslineRuntime = {
-  kind: "omp" | "pi";
   CustomEditor: typeof BaseCustomEditor;
   truncateToWidth(
     text: string,
@@ -1133,18 +1132,12 @@ function stopTimers(state: RuntimeState): void {
   state.timers = [];
 }
 
-function startTimers(
-  state: RuntimeState,
-  editorFactory: (tui: TUI, editorTheme: EditorTheme, keybindings: KeybindingsManager) => BaseCustomEditor,
-): void {
+function startTimers(state: RuntimeState): void {
   stopTimers(state);
   let lastModel = `${state.ctx.model?.provider ?? ""}/${state.ctx.model?.id ?? ""}`;
   state.timers.push(
     runtime.scheduleInterval(state.ctx, () => {
       if (!state.active) return;
-      if (runtime.kind === "pi" && state.ctx.ui.getEditorComponent() !== editorFactory) {
-        state.ctx.ui.setEditorComponent(editorFactory);
-      }
       const currentModel = `${state.ctx.model?.provider ?? ""}/${state.ctx.model?.id ?? ""}`;
       if (!state.cavemanSessionManaged) state.cavemanLevel = readCavemanLevel();
       const leafId = state.ctx.sessionManager.getLeafId();
@@ -1406,27 +1399,16 @@ export function createOmpStatusline(runtimeAdapter: StatuslineRuntime): (pi: Ext
   runtime = runtimeAdapter;
   truncateToWidth = runtime.truncateToWidth;
   visibleWidth = runtime.visibleWidth;
-  STATUS_COLORS = runtime.kind === "omp"
-    ? {
-        model: "statusLineModel",
-        path: "statusLinePath",
-        vcsClean: "statusLineGitClean",
-        vcsDirty: "statusLineGitDirty",
-        context: "statusLineContext",
-        spend: "statusLineSpend",
-        cost: "statusLineCost",
-        separator: "statusLineSep",
-      }
-    : {
-        model: "accent",
-        path: "muted",
-        vcsClean: "success",
-        vcsDirty: "warning",
-        context: "accent",
-        spend: "text",
-        cost: "warning",
-        separator: "dim",
-      };
+  STATUS_COLORS = {
+    model: "statusLineModel",
+    path: "statusLinePath",
+    vcsClean: "statusLineGitClean",
+    vcsDirty: "statusLineGitDirty",
+    context: "statusLineContext",
+    spend: "statusLineSpend",
+    cost: "statusLineCost",
+    separator: "statusLineSep",
+  };
   const OmpStatuslineEditor = createEditorClass(runtime.CustomEditor);
 
   return function ompStatusline(pi: ExtensionAPI): void {
@@ -1560,7 +1542,7 @@ export function createOmpStatusline(runtimeAdapter: StatuslineRuntime): (pi: Ext
         return new OmpStatuslineEditor(tui, editorTheme, keybindings, state);
       };
       state.restartTimers = () => {
-        startTimers(state, editorFactory);
+        startTimers(state);
       };
       ctx.ui.setEditorComponent(editorFactory);
       refreshCosts(state);

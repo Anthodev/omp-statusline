@@ -226,7 +226,6 @@ function createHost(options: HostOptions = {}): Host {
     setLabel: () => {},
   };
   const runtime = {
-    kind: "pi",
     CustomEditor: BaseEditor,
     truncateToWidth: (text: string, width: number) => text.slice(0, width),
     visibleWidth: (text: string) => stripTrustedStyles(text).length,
@@ -792,18 +791,13 @@ test("Git status distinguishes an empty commit subject from an unborn HEAD", asy
   }
 });
 
-test("both host entrypoints resolve the neutral shared core", async () => {
-  const entrypoints = [
-    join(import.meta.dir, "..", "extensions", "omp.ts"),
-    join(import.meta.dir, "..", "extensions", "pi.ts"),
-  ];
-  for (const entrypoint of entrypoints) {
-    const result = await Bun.build({
-      entrypoints: [entrypoint],
-      packages: "external",
-      target: "bun",
-    });
-    expect(result.success).toBe(true);
-    expect(result.logs).toHaveLength(0);
-  }
+test("the OMP host entrypoint resolves the neutral shared core", async () => {
+  const entrypoint = join(import.meta.dir, "..", "extensions", "omp.ts");
+  const result = await Bun.build({
+    entrypoints: [entrypoint],
+    packages: "external",
+    target: "bun",
+  });
+  expect(result.success).toBe(true);
+  expect(result.logs).toHaveLength(0);
 });
