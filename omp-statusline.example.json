@@ -1,0 +1,15 @@
+{
+  "refreshMs": 1000,
+  "vcsRefreshMs": 5000,
+  "usageRefreshMs": 60000,
+  "contextBarWidth": 20,
+  "quotaBarWidth": 12,
+  "progressBarStyle": "unicode",
+  "lineGap": false,
+  "cwdMode": "full",
+  "showThinking": true,
+  "showSessionName": true,
+  "showVcs": true,
+  "showCostWithoutSubscription": true,
+  "subscriptionAccount": ""
+}
